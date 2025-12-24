@@ -1,0 +1,22 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+python-dotenv
+
+# async / tasks
+celery
+redis
+
+# parsing
+requests
+beautifulsoup4
+
+# telegram
+telethon
+
+# AI
+openai
+
+# utils
+loguru
