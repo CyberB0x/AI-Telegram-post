@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from app.config import settings
 from app.database import Base, engine
 
+from app import models
+
 app = FastAPI(
     title=settings.app_name,
     debug=settings.debug
