@@ -46,3 +46,11 @@ class KeywordOut(KeywordBase):
     model_config = {
         "from_attributes": True
     }
+
+
+class GenerateRequest(BaseModel):
+    text: str
+
+
+class GenerateResponse(BaseModel):
+    generated_text: str

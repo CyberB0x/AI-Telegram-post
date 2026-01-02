@@ -5,7 +5,9 @@ from app.database import get_db
 from app import models
 from app.api import schemas
 from app.news_parser.sites import parse_all_sites
-
+from app.news_parser.telegram import TelegramParser
+from app.ai.generator import PostGenerator
+from app.api.schemas import GenerateRequest, GenerateResponse
 
 router = APIRouter(prefix="/api")
 
@@ -92,3 +94,21 @@ def delete_keyword(keyword_id: str, db: Session = Depends(get_db)):
 @router.post("/parse/sites/")
 def parse_sites(db: Session = Depends(get_db)):
     return parse_all_sites(db)
+
+
+@router.post("/parse/telegram/")
+async def parse_telegram(channel: str, limit: int = 5):
+    parser = TelegramParser()
+    posts = await parser.parse_channel(channel, limit)
+    return {
+        "status": "ok",
+        "count": len(posts),
+        "items": posts
+    }
+
+
+@router.post("/generate/", response_model=GenerateResponse)
+async def generate_post(data: GenerateRequest):
+    generator = PostGenerator()
+    result = await generator.generate_post(data.text)
+    return {"generated_text": result}

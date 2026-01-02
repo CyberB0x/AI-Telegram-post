@@ -5,6 +5,7 @@ from app.database import Base, engine
 
 from app import models
 from app.api.endpoints import router as api_router
+from app.telegram.publisher import router as telegram_router
 
 
 app = FastAPI(
@@ -13,6 +14,7 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
+app.include_router(telegram_router)
 
 
 @app.on_event("startup")

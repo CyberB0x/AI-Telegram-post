@@ -4,6 +4,10 @@ sqlalchemy
 pydantic
 python-dotenv
 
+openai
+httpx
+pydantic-settings
+
 # async / tasks
 celery
 redis
