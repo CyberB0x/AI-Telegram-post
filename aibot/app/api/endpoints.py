@@ -107,8 +107,12 @@ async def parse_telegram(channel: str, limit: int = 5):
     }
 
 
-@router.post("/generate/", response_model=GenerateResponse)
+@router.post("/generate")
 async def generate_post(data: GenerateRequest):
     generator = PostGenerator()
-    result = await generator.generate_post(data.text)
-    return {"generated_text": result}
+    result = await generator.generate_and_send(data.text)
+
+    return {
+        "status": "sent",
+        "message": result
+    }
