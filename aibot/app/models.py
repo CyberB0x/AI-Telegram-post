@@ -7,7 +7,8 @@ from sqlalchemy import (
     Text,
     ForeignKey,
     Enum,
-    UniqueConstraint
+    UniqueConstraint,
+    Integer
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -91,3 +92,13 @@ class Keyword(Base):
     word = Column(String, unique=True, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class ScheduledPost(Base):
+    __tablename__ = "scheduled_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(Text, nullable=False)
+    publish_at = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String(20), default="scheduled")  # scheduled | sent | failed
+    created_at = Column(DateTime)

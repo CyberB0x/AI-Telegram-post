@@ -1,17 +1,44 @@
-import asyncio
 from datetime import datetime, timezone
-from app.telegram.bot import TelegramBot
+from app.database import SessionLocal
+from app.models import ScheduledPost
+from app.scheduler.instance import scheduler
+from app.scheduler.tasks import send_scheduled_post
 
 
 async def schedule_post(text: str, publish_at: datetime):
+    # нормализация времени
+    if publish_at.tzinfo is None:
+        publish_at = publish_at.replace(tzinfo=timezone.utc)
+    else:
+        publish_at = publish_at.astimezone(timezone.utc)
+
     now = datetime.now(timezone.utc)
 
-    delay = (publish_at - now).total_seconds()
+    if publish_at <= now:
+        raise ValueError("publish_at must be in the future (UTC)")
 
-    if delay <= 0:
-        raise ValueError("publish_at must be in the future")
+    db = SessionLocal()
 
-    await asyncio.sleep(delay)
+    try:
+        post = ScheduledPost(
+            text=text,
+            publish_at=publish_at,
+            status="scheduled"
+        )
 
-    bot = TelegramBot()
-    await bot.send_message(text)
+        db.add(post)
+        db.commit()
+        db.refresh(post)
+
+        scheduler.add_job(
+            send_scheduled_post,
+            trigger="date",
+            run_date=publish_at,
+            args=[post.id],
+            id=f"post_{post.id}",
+            replace_existing=True,
+            misfire_grace_time=300  # лучше 5 минут
+        )
+
+    finally:
+        db.close()
