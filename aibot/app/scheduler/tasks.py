@@ -7,9 +7,12 @@ async def send_scheduled_post(post_id: int):
     db = SessionLocal()
 
     try:
-        post = db.query(ScheduledPost).get(post_id)
+        post = db.query(ScheduledPost).filter(
+            ScheduledPost.id == post_id
+        ).first()
 
-        if not post:
+        # защита от дублей (idempotency)
+        if not post or post.status != "scheduled":
             return
 
         bot = TelegramBot()
@@ -18,11 +21,11 @@ async def send_scheduled_post(post_id: int):
         post.status = "sent"
         db.commit()
 
-    except Exception as e:
+    except Exception:
         db.rollback()
-        post.status = "failed"
-        db.commit()
-        print("SEND ERROR:", e)
+        if post:
+            post.status = "failed"
+            db.commit()
 
     finally:
         db.close()
