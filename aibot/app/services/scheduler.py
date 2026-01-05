@@ -3,6 +3,9 @@ from app.database import SessionLocal
 from app.models import ScheduledPost
 from app.scheduler.instance import scheduler
 from app.scheduler.tasks import send_scheduled_post
+import logging
+
+logger = logging.getLogger("scheduler")
 
 
 async def schedule_post(text: str, publish_at: datetime):
@@ -38,6 +41,15 @@ async def schedule_post(text: str, publish_at: datetime):
             id=f"post_{post.id}",
             replace_existing=True,
             misfire_grace_time=300  # лучше 5 минут
+        )
+
+        logger.info(
+            "Post scheduled",
+            extra={
+                "post_id": post.id,
+                "publish_at": publish_at.isoformat(),
+                "status": "scheduled"
+            }
         )
 
     finally:

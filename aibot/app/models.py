@@ -100,5 +100,8 @@ class ScheduledPost(Base):
     id = Column(Integer, primary_key=True, index=True)
     text = Column(Text, nullable=False)
     publish_at = Column(DateTime(timezone=True), nullable=False)
-    status = Column(String(20), default="scheduled")  # scheduled | sent | failed
+    status = Column(String(20), default="scheduled", index=True)  # scheduled | sent | failed
+    retry_count = Column(Integer, default=0)
+    max_retries = Column(Integer, default=3)
+    last_error = Column(Text, nullable=True)
     created_at = Column(DateTime)
