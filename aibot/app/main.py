@@ -9,6 +9,9 @@ from app.models import ScheduledPost
 
 from app.api.endpoints import router as api_router
 from app.api.schedule import router as schedule_router
+from app.api.debug import router as debug_router
+
+
 
 from app.scheduler.instance import scheduler
 from app.scheduler.tasks import send_scheduled_post
@@ -39,6 +42,8 @@ app = FastAPI(
 app.include_router(api_router)
 app.include_router(schedule_router)
 app.include_router(schedule_manage_router)
+app.include_router(debug_router)
+
 
 
 @app.on_event("startup")

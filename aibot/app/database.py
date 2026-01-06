@@ -4,15 +4,25 @@ from sqlalchemy.pool import NullPool
 
 from app.config import settings
 
+
+# ----------------------------
+# ENGINE
+# ----------------------------
+
 engine = create_engine(
     settings.database_url,
     connect_args={
         "check_same_thread": False,
-        "timeout": 30,  # ждём, а не падаем
+        "timeout": 30,
     },
-    poolclass=NullPool,  # важно для SQLite + scheduler
+    poolclass=NullPool,  # обязательно для SQLite + APScheduler
     future=True,
 )
+
+
+# ----------------------------
+# SQLITE PRAGMAS
+# ----------------------------
 
 @event.listens_for(engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -20,20 +30,30 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     try:
         cursor.execute("PRAGMA journal_mode=WAL;")
     except Exception:
-        pass  # если БД занята — просто пропускаем
+        pass
     cursor.execute("PRAGMA synchronous=NORMAL;")
     cursor.execute("PRAGMA foreign_keys=ON;")
     cursor.close()
 
+
+# ----------------------------
+# SESSION
+# ----------------------------
+
 SessionLocal = sessionmaker(
+    bind=engine,
     autocommit=False,
     autoflush=False,
-    bind=engine,
     expire_on_commit=False,
 )
 
+
 Base = declarative_base()
 
+
+# ----------------------------
+# DEPENDENCY
+# ----------------------------
 
 def get_db():
     db = SessionLocal()

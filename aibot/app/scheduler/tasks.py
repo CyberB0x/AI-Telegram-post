@@ -1,75 +1,57 @@
-from datetime import datetime, timezone, timedelta
-from sqlalchemy import update
+import logging
+import asyncio
+from sqlalchemy.orm import Session
+
 from app.database import SessionLocal
 from app.models import ScheduledPost
-from app.telegram.bot import TelegramBot
-from app.scheduler.instance import scheduler
-import logging
+from app.repositories.scheduled_posts import try_acquire_post_lock
+from app.telegram.client import send_telegram_message
 
 logger = logging.getLogger(__name__)
 
 
-async def send_scheduled_post(post_id: int):
-    db = SessionLocal()
+def send_scheduled_post(post_id: int):
+    db: Session = SessionLocal()
 
     try:
-        # ATOMIC LOCK
-        result = db.execute(
-            update(ScheduledPost)
-            .where(
-                ScheduledPost.id == post_id,
-                ScheduledPost.status.in_(["scheduled", "retrying"])
+        # atomic lock (commit ВНУТРИ)
+        if not try_acquire_post_lock(db, post_id):
+            logger.warning(
+                "Post %s already processed or locked",
+                post_id
             )
-            .values(status="processing")
-        )
-        db.commit()
-
-        if result.rowcount == 0:
-            logger.warning(f"Post {post_id} skipped (already processed)")
             return
 
+        # получить post ПОСЛЕ lock
         post = db.get(ScheduledPost, post_id)
-        bot = TelegramBot()
+        if not post:
+            logger.error("Post %s not found", post_id)
+            return
 
-        logger.info(f"Sending post {post_id}")
-        await bot.send_message(post.text)
+        # внешнее действие (НЕ ТРОГАЕТ БД)
+        asyncio.run(send_telegram_message(post.text))
 
-        # SUCCESS
+        #  обновление статуса
         post.status = "sent"
-        post.last_error = None
         db.commit()
 
-        logger.info(f"Post {post_id} sent successfully")
+        logger.info("Post %s sent successfully", post_id)
 
     except Exception as e:
+        logger.exception("Post %s failed", post_id)
+
+        # ОБЯЗАТЕЛЬНО
         db.rollback()
-        post = db.get(ScheduledPost, post_id)
 
-        post.retry_count += 1
-        post.last_error = str(e)
-
-        if post.retry_count < post.max_retries:
-            post.status = "retrying"
-
-            retry_time = datetime.now(timezone.utc) + timedelta(minutes=5)
-
-            scheduler.add_job(
-                send_scheduled_post,
-                trigger="date",
-                run_date=retry_time,
-                args=[post.id],
-                id=f"post_retry_{post.id}_{post.retry_count}",
-                replace_existing=False
-            )
-
-            logger.error(
-                f"Post {post_id} failed, retry {post.retry_count}/{post.max_retries}"
-            )
-        else:
-            post.status = "failed"
-            logger.critical(f"Post {post_id} permanently failed")
-
-        db.commit()
+        try:
+            post = db.get(ScheduledPost, post_id)
+            if post:
+                post.status = "failed"
+                post.last_error = str(e)
+                db.commit()
+        except Exception:
+            db.rollback()
+            logger.error("Failed to mark post %s as failed", post_id)
 
     finally:
         db.close()

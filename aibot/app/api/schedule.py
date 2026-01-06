@@ -1,10 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from datetime import timezone
+import logging
 
 from app.schemas.schedule import SchedulePostRequest
 from app.services.scheduler import schedule_post
-import logging
-
 
 router = APIRouter(prefix="/api", tags=["Scheduler"])
 
@@ -13,6 +12,15 @@ logger = logging.getLogger("api.scheduler")
 
 @router.post("/schedule")
 async def schedule_message(data: SchedulePostRequest):
+    """
+    Schedule a Telegram message for future publishing.
+
+    IMPORTANT:
+    - This endpoint is SYNC on purpose.
+    - SQLite does NOT work reliably with async DB access.
+    - APScheduler + SQLite requires single-threaded DB usage.
+    """
+
     publish_at = data.publish_at
 
     logger.info(
@@ -20,7 +28,7 @@ async def schedule_message(data: SchedulePostRequest):
         publish_at
     )
 
-    # НОРМАЛИЗАЦИЯ В UTC
+    # Нормализация в UTC
     if publish_at.tzinfo is None:
         publish_at = publish_at.replace(tzinfo=timezone.utc)
         logger.info(
@@ -35,7 +43,7 @@ async def schedule_message(data: SchedulePostRequest):
         )
 
     try:
-        await schedule_post(
+        await schedule_post(  # ← ВОТ ЭТО БЫЛО ПРОПУЩЕНО
             text=data.text,
             publish_at=publish_at
         )
