@@ -6,6 +6,21 @@ Designed with reliability, atomic execution, and future scalability in mind.
 
 ---
 
+## 📜 License
+
+This project is licensed under a **Proprietary Non-Commercial License**.
+
+You are allowed to view and evaluate the source code for personal
+or educational purposes only.
+
+❌ Commercial use, redistribution, or reuse of the core logic
+without explicit written permission is strictly prohibited.
+
+© 2026 Arslonbek Erkinov. All rights reserved.
+
+
+---
+
 ## 🚀 Features
 
 - 📰 **News parsing from external sources**
