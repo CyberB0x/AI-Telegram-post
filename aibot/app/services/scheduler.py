@@ -1,3 +1,7 @@
+# © 2026 Arslonbek Erkinov
+# Proprietary Software – All Rights Reserved
+# Unauthorized copying or commercial use is prohibited
+
 from datetime import datetime, timezone
 from app.database import SessionLocal
 from app.models import ScheduledPost
