@@ -4,6 +4,29 @@ from sqlalchemy.pool import NullPool
 
 from app.config import settings
 
+"""
+===============================
+POSTGRESQL READY CONFIG
+===============================
+
+Когда будем переходить на PostgreSQL:
+
+DATABASE_URL=postgresql+psycopg2://user:password@host:5432/dbname
+
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+    future=True,
+)
+
+ВАЖНО:
+- Убрать NullPool
+- Убрать check_same_thread
+- Убрать SQLite PRAGMA
+"""
+
 
 # ----------------------------
 # ENGINE
