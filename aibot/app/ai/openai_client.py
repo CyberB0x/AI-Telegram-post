@@ -8,7 +8,7 @@ class OpenAIClient:
         self.base_url = "https://api.openai.com/v1/chat/completions"
 
     async def generate(self, prompt: str) -> str:
-        # ✅ SAFE MOCK MODE
+        #  SAFE MOCK MODE
         if not self.api_key or self.api_key.lower().startswith("mock"):
             return (
                 "🤖 MOCK AI POST\n\n"
