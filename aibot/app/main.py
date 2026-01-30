@@ -1,3 +1,7 @@
+# © 2026 Arslonbek Erkinov
+# Proprietary Software – All Rights Reserved
+# Unauthorized copying or commercial use is prohibited
+
 from fastapi import FastAPI
 from datetime import datetime, timezone
 import logging

@@ -1,3 +1,7 @@
+# © 2026 Arslonbek Erkinov
+# Proprietary Software – All Rights Reserved
+# Unauthorized copying or commercial use is prohibited
+
 import logging
 import asyncio
 from sqlalchemy.orm import Session
